@@ -118,6 +118,7 @@ local QCM_BG_COLOR =        0xA0A0A0                -- 0xRRGGBB
 local QCM_FONT_COLOR =      0x000000                -- 0xRRGGBB
 local QCM_2DFONT_SIZE =     12                      -- 7, 9, 10, 11, 12, 16, or 24
 local QCM_FONT_SIZE =       9                       -- 7, 9, 10, 11, 12, 16, or 24
+local QCM_TINY_FONT =       7
 local QCM_HELP_TEXT1 =      "[↑]/[↓] : PREV/NEXT"
 local QCM_HELP_TEXT2 =      "[ENTER] : VALIDATE"
 local QCM_TIMER_PERIOD =    1                       -- Second
@@ -247,15 +248,14 @@ function on.construction( )
             end
             
             if QCM_DEBUG then
-                print( "Keyfilter: [ENTER]"..key )
+                print( "Keyfilter: [ENTER]" )
                 print( "Validated answer: "..qcm_answers[qcm_ui_state] )
             end
             
             if qcm_ui_state == QCM_NB_ANSWERS then
                 if qcm_answers[qcm_ui_state] == QCM_QUESTIONS[qcm_ui_state][QCM_Q_GOOD_RESP] then
-                    timer.stop( )
-                    qcm_ui_state = qcm_ui_state + 1
                     qcm_compute_grade( )
+                    qcm_ui_state = qcm_ui_state + 1
                     qcm_refresh_screen( )
                 else
                     qcm_ui_state = qcm_ui_state - 1
@@ -265,7 +265,6 @@ function on.construction( )
                 if qcm_ui_state < QCM_NB_ANSWERS then     
                     -- Increment UI state
                     qcm_ui_state = qcm_ui_state + 1
-                    qcm_answers[qcm_ui_state] = ""
                     qcm_refresh_screen( )
                 end
             end
@@ -354,6 +353,7 @@ function on.paint( gc )
         gc:setFont( "sansserif", "r", QCM_FONT_SIZE )
         
         -- Display help
+        gc:setColorRGB( QCM_FONT_COLOR )
         gc:drawString( QCM_HELP_TEXT1, QCM_MARGIN, 2 * qcm_screen_H * QCM_QUESTION_BOX_H + 3 * QCM_MARGIN, "top" )
         local sw = gc:getStringWidth( QCM_HELP_TEXT2 )
         gc:drawString( QCM_HELP_TEXT2, qcm_screen_W - QCM_MARGIN - sw, 2 * qcm_screen_H * QCM_QUESTION_BOX_H + 3 * QCM_MARGIN, "top" )
@@ -365,18 +365,18 @@ function on.paint( gc )
         if QCM_DEBUG then
             print( "Paint event: QR code screen" )
         end
-        
+
         -- Display QR code
-        local qcm_offset_x = ( qcm_screen_W - #qcm_qrcode * QCM_QR_CODE_PIX_SZ ) / 2
-        local qcm_offset_y = ( qcm_screen_H - #qcm_qrcode * QCM_QR_CODE_PIX_SZ ) / 2
-        if qcm_offset_x >= 0 and qcm_offset_y >= 0 then
-            -- Display text result
-            if QCM_TEXT_RESULT == 1 then
-                gc:setFont( "sansserif", "r", QCM_FONT_SIZE )
-                gc:drawString( qcm_qr_message, 1, qcm_screen_H, "bottom" )
-            end
-            -- Display QR code
-            if qcm_qrcode ~= nil then
+        if qcm_qrcode ~= nil then
+        
+            -- Calculate QR code display offsets
+            local qcm_offset_x = ( qcm_screen_W - #qcm_qrcode * QCM_QR_CODE_PIX_SZ ) / 2
+            local qcm_offset_y = ( qcm_screen_H - #qcm_qrcode * QCM_QR_CODE_PIX_SZ ) / 2
+            
+            if qcm_offset_x >= 0 and qcm_offset_y >= 0 then
+                
+                -- Display QR code
+                
                 for x = 1, #qcm_qrcode  do
                     for y = 1, #qcm_qrcode do
                         if qcm_qrcode[x][y] > 0 then
@@ -390,10 +390,19 @@ function on.paint( gc )
                         end
                     end
                 end
+            else
+                -- QR code if too bif to be displayed, fallback to text
+                gc:setColorRGB( QCM_FONT_COLOR )
+                gc:setFont( "sansserif", "r", QCM_TINY_FONT )
+                gc:drawString( qcm_qr_message, 1, qcm_screen_H, "bottom" )
             end
-        else
-            gc:setFont( "sansserif", "r", QCM_FONT_SIZE )
-            gc:drawString( qcm_qr_message, 1, qcm_screen_H, "bottom" )
+            
+            -- Display text result if needed
+            if QCM_TEXT_RESULT == 1 then
+                gc:setColorRGB( QCM_FONT_COLOR )
+                gc:setFont( "sansserif", "r", QCM_TINY_FONT )
+                gc:drawString( qcm_qr_message, 1, qcm_screen_H, "bottom" )
+            end 
         end
     end
 end
@@ -414,6 +423,11 @@ function qcm_compute_grade( )
                     if qcm_unpretty( qcm_answers[i] ) == QCM_QUESTIONS[i][QCM_Q_GOOD_RESP] then
                         qcm_grade = qcm_grade + QCM_QUESTIONS[i][QCM_Q_RESP_PTS]
                         qcm_grade_pattern = qcm_grade_pattern + 2^(i-1)
+                        if QCM_DEBUG then
+                            print( "Q#"..i.."(string): correct" )
+                            print( "grade: "..qcm_grade )
+                            print( "pattern: "..qcm_grade_pattern )
+                        end
                     end
                 elseif QCM_QUESTIONS[i][QCM_Q_TYPE_RESP] == "num" then
                     -- Expected answer is a number
@@ -422,6 +436,11 @@ function qcm_compute_grade( )
                         if math.abs( num_anwser - QCM_QUESTIONS[i][QCM_Q_GOOD_RESP] ) <= QCM_QUESTIONS[i][QCM_Q_RESP_TOL] then
                             qcm_grade = qcm_grade + QCM_QUESTIONS[i][QCM_Q_RESP_PTS]
                             qcm_grade_pattern = qcm_grade_pattern + 2^(i-1)
+                            if QCM_DEBUG then
+                                print( "Q#"..i.."(num): correct" )
+                                print( "grade: "..qcm_grade )
+                                print( "pattern: "..qcm_grade_pattern )
+                            end
                         end
                     end
                 elseif QCM_QUESTIONS[i][QCM_Q_TYPE_RESP] == "sym" then
@@ -431,6 +450,11 @@ function qcm_compute_grade( )
                     if res == "0" then
                         qcm_grade = qcm_grade + QCM_QUESTIONS[i][QCM_Q_RESP_PTS]
                         qcm_grade_pattern = qcm_grade_pattern + 2^(i-1)
+                        if QCM_DEBUG then
+                            print( "Q#"..i.."(sym): correct" )
+                            print( "grade: "..qcm_grade )
+                            print( "pattern: "..qcm_grade_pattern )
+                        end
                     end
                 end
             end
@@ -509,13 +533,15 @@ function qcm_refresh_screen( )
         
         -- Compute QR code
         local ok, tab_or_message = qrcode( qcm_qr_message )
-        if QCM_DEBUG then
-            if not ok then
+        if not ok then
+            if QCM_DEBUG then
                 print( tab_or_message )
-            else
-                print( "QR code defined" )
-                qcm_qrcode = tab_or_message
             end
+        else
+            if QCM_DEBUG then
+                print( "QR code defined" )
+            end
+            qcm_qrcode = tab_or_message
         end
     end
     
