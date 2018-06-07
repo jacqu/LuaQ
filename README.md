@@ -24,4 +24,4 @@ Usage:
 		- response pattern: binary number coding good/false responses, LSB = first question
 		- machine ID: unique machine ID, alias if defined or "undefined" on an emulator
 	- upload LuaQ.tns to your calculator
-	- on your calculator, select LuaQ.tns in the file explorer and press [ENTER] 
+- On your calculator, select LuaQ.tns in the file explorer and press [ENTER] 
