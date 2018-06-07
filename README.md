@@ -1,5 +1,8 @@
 # LuaQ
 
+Special thanks to Patrick Gundlach for his Lua QR code generation code.
+(http://speedata.github.com/luaqrcode/)
+
 Features :
 - Symbolic responses are evaluated with CAS math engine: robust to equation forms variations
 - A tolerance on numerical responses accuracy can be defined
