@@ -24,11 +24,11 @@
 
 
 -- Define quizz questions
--- To insertspecial characters like subscripts, edit in scratchpad and then copy and paste
+-- To insert special characters like subscripts, edit in scratchpad and then copy and paste
 
 -- Responses may be multidimensional, here enter [0;0;-1]
-local QCM_Q1="Let \\0el {M₀₁=[[0,0,-1][0,1,0][1,0,0]]}\nEnter the coordinates of \\0el {x₁} in \\0el {R₀}"
-local QCM_R1="[[0][0][-1]]"
+local QCM_Q1="Let \\0el {M₀₁=[0,0,-1;0,1,0;1,0,0]}\nEnter the coordinates of \\0el {x₁} in \\0el {R₀}"
+local QCM_R1="[[0][0][1]]"
 
 -- z/(z-1) or 1/(1-z^(-1)) are valid
 local QCM_Q2="Give the Z transform of an integrator"
@@ -459,34 +459,36 @@ function qcm_compute_grade( )
                     end
                 elseif QCM_QUESTIONS[i][QCM_Q_TYPE_RESP] == "sym" then
                     -- Expected answer is symbolic
-                    --qcm_expression_check = "expand(tExpand("..qcm_unpretty( qcm_answers[i] ).."-("..QCM_QUESTIONS[i][QCM_Q_GOOD_RESP]..")))"
+                    
+                    -- Construct expression to be evaluated by CAS engine
                     local expr1 = "expand(tExpand("..qcm_unpretty( qcm_answers[i] ).."))"
                     local expr2 = "expand(tExpand("..QCM_QUESTIONS[i][QCM_Q_GOOD_RESP].."))"
-                    qcm_expression_check = expr1.."="..expr2
+                    qcm_expression_check = "norm("..expr1.."-"..expr2..")<="..QCM_QUESTIONS[i][QCM_Q_RESP_TOL]
                     
                     -- Evaluate symbolic expression
                     local res, err = math.evalStr( qcm_expression_check )
-                    local pstart, pend = nil, nil
                     
-                    -- Look for false comparison result
+                    -- Analyse result
                     if res ~= nil then
-                        pstart, pend = string.find( res, "false" )
                         if QCM_DEBUG then
                             print( "math.evalStr( "..qcm_expression_check.." ) = "..res )
+                        end
+                        
+                        -- Response is goog if and only if result is "true"       
+                        pstart, pend = string.find( res, "true" )
+                        
+                        if pstart ~= nil then
+                            qcm_grade = qcm_grade + QCM_QUESTIONS[i][QCM_Q_RESP_PTS]
+                            qcm_grade_pattern = qcm_grade_pattern + 2^(i-1)
+                            if QCM_DEBUG then
+                                print( "Q#"..i.."(sym): correct" )
+                                print( "grade: "..qcm_grade )
+                                print( "pattern: "..qcm_grade_pattern )
+                            end 
                         end
                     else
                         if QCM_DEBUG then
                             print( "math.evalStr( "..qcm_expression_check.." ) = nil" )
-                        end
-                    end
-                    
-                    if pstart == nil then
-                        qcm_grade = qcm_grade + QCM_QUESTIONS[i][QCM_Q_RESP_PTS]
-                        qcm_grade_pattern = qcm_grade_pattern + 2^(i-1)
-                        if QCM_DEBUG then
-                            print( "Q#"..i.."(sym): correct" )
-                            print( "grade: "..qcm_grade )
-                            print( "pattern: "..qcm_grade_pattern )
                         end
                     end
                 end
@@ -1936,3 +1938,5 @@ function qrcode( str, ec_level, mode )
 	local tab = get_matrix_with_lowest_penalty(version,ec_level,arranged_data)
 	return true, tab
 end
+
+    
