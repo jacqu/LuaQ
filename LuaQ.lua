@@ -23,13 +23,27 @@
 -- Jacques Gangloff, June 2018
 
 
--- Define quizz questions      
+-- Define quizz questions
+-- To insertspecial characters like subscripts, edit in scratchpad and then copy and paste
+
+-- Responses may be multidimensional, here enter [0;0;-1]
+local QCM_Q1="Let \\0el {M₀₁=[[0,0,-1][0,1,0][1,0,0]]}\nEnter the coordinates of \\0el {x₁} in \\0el {R₀}"
+local QCM_R1="[[0][0][-1]]"
+
+-- z/(z-1) or 1/(1-z^(-1)) are valid
+local QCM_Q2="Give the Z transform of an integrator"
+local QCM_R2="z/(z-1)"
+
+-- z^-1) or 1/z are valid. Here the subscript "s" of T is not visible in the editor
+local QCM_Q3="What is the discrete transfer function of \\0el {exp(-T)}\nwith \\0el {T} the sampling period?"
+local QCM_R3="z^(-1)"
+
 local QCM_QUESTIONS = {-- Label of question,                                Good response,      Type of response,   Tolerance,  Points
                         { "Enter your familiy name...",                     "",                 "string",           0,          0 },                    
                         { "Enter your firstname...",                        "",                 "string",           0,          0 },
-                        { "What is the result of\n\\0el {√(4)}?",           2,                  "num",              0,          1 },
-                        { "What is the exact result of\n\\0el {cos(π/4)}?", "√(2)/2",           "sym",              0,          1 },
-                        { "What is the result of \n\\0el {2.2/2}?",         1.1,                "num",              0.1,        1 },
+                        { QCM_Q1,                                           QCM_R1,             "sym",              0,          1 },
+                        { QCM_Q2,                                           QCM_R2,             "sym",              0,          1 },
+                        { QCM_Q3,                                           QCM_R3,             "sym",              0,          1 },
                         { "Validate (y/n)",                                 "y",                "string",           0,          0 }
                       }
 
@@ -116,7 +130,7 @@ local QCM_RESPONSE_BOX_H =  0.42                    -- Fraction of window height
 local QCM_QUESTION_BOX_H =  0.42                    -- Fraction of window height
 local QCM_BG_COLOR =        0xA0A0A0                -- 0xRRGGBB
 local QCM_FONT_COLOR =      0x000000                -- 0xRRGGBB
-local QCM_2DFONT_SIZE =     12                      -- 7, 9, 10, 11, 12, 16, or 24
+local QCM_2DFONT_SIZE =     10                      -- 7, 9, 10, 11, 12, 16, or 24
 local QCM_FONT_SIZE =       9                       -- 7, 9, 10, 11, 12, 16, or 24
 local QCM_TINY_FONT =       7
 local QCM_HELP_TEXT1 =      "[↑]/[↓] : PREV/NEXT"
@@ -445,9 +459,28 @@ function qcm_compute_grade( )
                     end
                 elseif QCM_QUESTIONS[i][QCM_Q_TYPE_RESP] == "sym" then
                     -- Expected answer is symbolic
-                    qcm_expression_check = "expand(tExpand("..qcm_unpretty( qcm_answers[i] ).."-("..QCM_QUESTIONS[i][QCM_Q_GOOD_RESP]..")))"
-                    res, err = math.evalStr( qcm_expression_check )
-                    if res == "0" then
+                    --qcm_expression_check = "expand(tExpand("..qcm_unpretty( qcm_answers[i] ).."-("..QCM_QUESTIONS[i][QCM_Q_GOOD_RESP]..")))"
+                    local expr1 = "expand(tExpand("..qcm_unpretty( qcm_answers[i] ).."))"
+                    local expr2 = "expand(tExpand("..QCM_QUESTIONS[i][QCM_Q_GOOD_RESP].."))"
+                    qcm_expression_check = expr1.."="..expr2
+                    
+                    -- Evaluate symbolic expression
+                    local res, err = math.evalStr( qcm_expression_check )
+                    local pstart, pend = nil, nil
+                    
+                    -- Look for false comparison result
+                    if res ~= nil then
+                        pstart, pend = string.find( res, "false" )
+                        if QCM_DEBUG then
+                            print( "math.evalStr( "..qcm_expression_check.." ) = "..res )
+                        end
+                    else
+                        if QCM_DEBUG then
+                            print( "math.evalStr( "..qcm_expression_check.." ) = nil" )
+                        end
+                    end
+                    
+                    if pstart == nil then
                         qcm_grade = qcm_grade + QCM_QUESTIONS[i][QCM_Q_RESP_PTS]
                         qcm_grade_pattern = qcm_grade_pattern + 2^(i-1)
                         if QCM_DEBUG then
