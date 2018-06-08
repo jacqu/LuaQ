@@ -421,6 +421,20 @@ function on.paint( gc )
     end
 end
 
+-- Script focus event
+function on.getFocus( )
+    
+    if qcm_ui_state > 0 and qcm_ui_state <= QCM_NB_ANSWERS then
+        
+        if QCM_DEBUG then
+            print( "Focus event: set focus to response box" )
+        end
+        
+        -- Set focus to response editor
+        qcm_response:setFocus( true )
+    end
+end
+
 -- Compute grade
 function qcm_compute_grade( )
     local qcm_expression_check = ""
