@@ -27,28 +27,38 @@
 -- To insert special characters like subscripts, edit in scratchpad and then copy and paste
 
 -- Responses may be multidimensional, here enter [0;0;-1]
-local QCM_Q1="Let \\0el {M₀₁=[0,0,-1;0,1,0;1,0,0]}\nEnter the coordinates of \\0el {x₁} in \\0el {R₀}"
-local QCM_R1="[[0][0][1]]"
+-- local QCM_Q1="Let \\0el {M₀₁=[0,0,-1;0,1,0;1,0,0]}\nEnter the coordinates of \\0el {x₁} in \\0el {R₀}"
+-- local QCM_R1="[[0][0][1]]"
 
 -- z/(z-1) or 1/(1-z^(-1)) are valid
-local QCM_Q2="Give the Z transform of an integrator"
-local QCM_R2="z/(z-1)"
+-- local QCM_Q2="Give the Z transform of an integrator"
+-- local QCM_R2="z/(z-1)"
 
 -- z^-1) or 1/z are valid. Here the subscript "s" of T is not visible in the editor
-local QCM_Q3="What is the discrete transfer function of \\0el {exp(-T)}\nwith \\0el {T} the sampling period?"
-local QCM_R3="z^(-1)"
+-- local QCM_Q3="What is the discrete transfer function of \\0el {exp(-T)}\nwith \\0el {T} the sampling period?"
+-- local QCM_R3="z^(-1)"
 
+-- Robotics, chapter 1, exercise 1
+local QCM_Q1="Donner l'expression de \\0el {M01}"
+local QCM_R1="[[cos(α),−sin(α),0,a1][sin(α),cos(α),0,0][0,0,1,d][0,0,0,1]]"
+local QCM_Q2="Donner l'expression de \\0el {M12}"
+local QCM_R2="[[sin(β),cos(β),0,a3*sin(β)][cos(β),−sin(β),0,a2+a3*cos(β)][0,0,−1,0][0,0,0,1]]"
+local QCM_Q3="Donner l'expression de \\0el {M02}"
+local QCM_R3="[[−sin(α-β),cos(α-β),0,a1-a3*sin(α-β)-a2*sin(α)][cos(α-β),sin(α-β),0,a3*cos(α-β)+a2*cos(α)][0,0,−1,d][0,0,0,1]]"
 local QCM_QUESTIONS = {-- Label of question,                                Good response,      Type of response,   Tolerance,  Points
-                        { "Enter your familiy name...",                     "",                 "string",           0,          0 },                    
-                        { "Enter your firstname...",                        "",                 "string",           0,          0 },
+                        { "Entrez votre nom...",                            "",                 "string",           0,          0 },                    
+                        { "Entrez votre prénom...",                         "",                 "string",           0,          0 },
                         { QCM_Q1,                                           QCM_R1,             "sym",              0,          1 },
                         { QCM_Q2,                                           QCM_R2,             "sym",              0,          1 },
                         { QCM_Q3,                                           QCM_R3,             "sym",              0,          1 },
-                        { "Validate (y/n)",                                 "y",                "string",           0,          0 }
+                        { "VALIDER le QUIZ? (o/n)\n(terminer le quiz)",     "o",                "string",           0,          0 }
                       }
 
 -- Display textual result along with QR code 1 = display 0 = hide
 local QCM_TEXT_RESULT = 1
+
+-- Display red/green color for wrong/right response
+local QCM_RESPONSE_FEEDBACK = 1
 
 -- Define machine aliases ["MACHINE_ID"]="ALIAS"
 local QCM_ALIASES = {
@@ -130,6 +140,8 @@ local QCM_RESPONSE_BOX_H =  0.42                    -- Fraction of window height
 local QCM_QUESTION_BOX_H =  0.42                    -- Fraction of window height
 local QCM_BG_COLOR =        0xA0A0A0                -- 0xRRGGBB
 local QCM_FONT_COLOR =      0x000000                -- 0xRRGGBB
+local QCM_FONT_COLOR_GREEN =0x00FF00                -- 0xRRGGBB
+local QCM_FONT_COLOR_RED =  0xFF0000                -- 0xRRGGBB
 local QCM_2DFONT_SIZE =     10                      -- 7, 9, 10, 11, 12, 16, or 24
 local QCM_FONT_SIZE =       9                       -- 7, 9, 10, 11, 12, 16, or 24
 local QCM_TINY_FONT =       7
@@ -139,7 +151,7 @@ local QCM_TIMER_PERIOD =    1                       -- Second
 local QCM_QR_CODE_PIX_SZ =  2                       -- Pixels
 local QCM_SPLASH_DURATION = 3                       -- Second
 local QCM_SPLASH_SCREEN =   image.new( _R.IMG.LogoLuaQ )
-local QCM_DEBUG =           nil                     -- nil = disable, 1 = enable debug messages
+local QCM_DEBUG =           1                       -- nil = disable, 1 = enable debug messages
 
 -- Define internal constants
 local QCM_NB_ANSWERS =      table.maxn( QCM_QUESTIONS )
@@ -435,9 +447,69 @@ function on.getFocus( )
     end
 end
 
+-- Check response
+function qcm_check_response( i )
+    local qcm_expression_check = ""
+    
+    if qcm_answers[i] ~= nil and qcm_answers[i] ~= "" then
+        if QCM_QUESTIONS[i][QCM_Q_TYPE_RESP] == "string" then
+            -- Expected answer is a string
+            if qcm_unpretty( qcm_answers[i] ) == QCM_QUESTIONS[i][QCM_Q_GOOD_RESP] then
+                return true
+            end
+        elseif QCM_QUESTIONS[i][QCM_Q_TYPE_RESP] == "num" then
+            -- Expected answer is a number
+            local num_anwser = tonumber( qcm_unpretty( qcm_answers[i] ) )
+            if num_anwser ~= nil then
+                if math.abs( num_anwser - QCM_QUESTIONS[i][QCM_Q_GOOD_RESP] ) <= QCM_QUESTIONS[i][QCM_Q_RESP_TOL] then
+                    return true
+                end
+            end
+        elseif QCM_QUESTIONS[i][QCM_Q_TYPE_RESP] == "sym" then
+            -- Expected answer is symbolic
+            
+            -- Construct expression to be evaluated by CAS engine
+            local expr1 = "expand(tExpand("..qcm_unpretty( qcm_answers[i] ).."))"
+            local expr2 = "expand(tExpand("..QCM_QUESTIONS[i][QCM_Q_GOOD_RESP].."))"
+            
+            -- Check if expressions are scalar; if yes, insert it in a one dimensional matrix
+            local res, err = math.evalStr( "dim("..expr1..")" )
+            if res == nil then
+                expr1 = "["..expr1.."]"
+            end
+            res, err = math.evalStr( "dim("..expr2..")" )
+            if res == nil then
+                expr2 = "["..expr2.."]"
+            end
+            qcm_expression_check = "norm("..expr1.."-"..expr2..")<="..QCM_QUESTIONS[i][QCM_Q_RESP_TOL]
+            
+            -- Evaluate symbolic expression
+            res, err = math.evalStr( qcm_expression_check )
+            
+            -- Analyze result
+            if res ~= nil then
+                if QCM_DEBUG then
+                    print( "math.evalStr( "..qcm_expression_check.." ) = "..res )
+                end
+                
+                -- Response is goog if and only if result is "true"       
+                pstart, pend = string.find( res, "true" )
+                
+                if pstart ~= nil then
+                    return true
+                end
+            else
+                if QCM_DEBUG then
+                    print( "math.evalStr( "..qcm_expression_check.." ) = nil" )
+                end
+            end
+        end
+    end
+    return false
+end
+
 -- Compute grade
 function qcm_compute_grade( )
-    local qcm_expression_check = ""
     
     qcm_grade = 0
     qcm_grade_pattern = 0
@@ -445,67 +517,14 @@ function qcm_compute_grade( )
     -- Iterate through all qestions
     for i = 1, QCM_NB_ANSWERS do
         if QCM_QUESTIONS[i][QCM_Q_RESP_PTS] > 0 then
-            if qcm_answers[i] ~= nil and qcm_answers[i] ~= "" then
-                if QCM_QUESTIONS[i][QCM_Q_TYPE_RESP] == "string" then
-                    -- Expected answer is a string
-                    if qcm_unpretty( qcm_answers[i] ) == QCM_QUESTIONS[i][QCM_Q_GOOD_RESP] then
-                        qcm_grade = qcm_grade + QCM_QUESTIONS[i][QCM_Q_RESP_PTS]
-                        qcm_grade_pattern = qcm_grade_pattern + 2^(i-1)
-                        if QCM_DEBUG then
-                            print( "Q#"..i.."(string): correct" )
-                            print( "grade: "..qcm_grade )
-                            print( "pattern: "..qcm_grade_pattern )
-                        end
-                    end
-                elseif QCM_QUESTIONS[i][QCM_Q_TYPE_RESP] == "num" then
-                    -- Expected answer is a number
-                    local num_anwser = tonumber( qcm_unpretty( qcm_answers[i] ) )
-                    if num_anwser ~= nil then
-                        if math.abs( num_anwser - QCM_QUESTIONS[i][QCM_Q_GOOD_RESP] ) <= QCM_QUESTIONS[i][QCM_Q_RESP_TOL] then
-                            qcm_grade = qcm_grade + QCM_QUESTIONS[i][QCM_Q_RESP_PTS]
-                            qcm_grade_pattern = qcm_grade_pattern + 2^(i-1)
-                            if QCM_DEBUG then
-                                print( "Q#"..i.."(num): correct" )
-                                print( "grade: "..qcm_grade )
-                                print( "pattern: "..qcm_grade_pattern )
-                            end
-                        end
-                    end
-                elseif QCM_QUESTIONS[i][QCM_Q_TYPE_RESP] == "sym" then
-                    -- Expected answer is symbolic
-                    
-                    -- Construct expression to be evaluated by CAS engine
-                    local expr1 = "expand(tExpand("..qcm_unpretty( qcm_answers[i] ).."))"
-                    local expr2 = "expand(tExpand("..QCM_QUESTIONS[i][QCM_Q_GOOD_RESP].."))"
-                    qcm_expression_check = "norm("..expr1.."-"..expr2..")<="..QCM_QUESTIONS[i][QCM_Q_RESP_TOL]
-                    
-                    -- Evaluate symbolic expression
-                    local res, err = math.evalStr( qcm_expression_check )
-                    
-                    -- Analyse result
-                    if res ~= nil then
-                        if QCM_DEBUG then
-                            print( "math.evalStr( "..qcm_expression_check.." ) = "..res )
-                        end
-                        
-                        -- Response is goog if and only if result is "true"       
-                        pstart, pend = string.find( res, "true" )
-                        
-                        if pstart ~= nil then
-                            qcm_grade = qcm_grade + QCM_QUESTIONS[i][QCM_Q_RESP_PTS]
-                            qcm_grade_pattern = qcm_grade_pattern + 2^(i-1)
-                            if QCM_DEBUG then
-                                print( "Q#"..i.."(sym): correct" )
-                                print( "grade: "..qcm_grade )
-                                print( "pattern: "..qcm_grade_pattern )
-                            end 
-                        end
-                    else
-                        if QCM_DEBUG then
-                            print( "math.evalStr( "..qcm_expression_check.." ) = nil" )
-                        end
-                    end
-                end
+            if qcm_check_response( i ) == true then
+                qcm_grade = qcm_grade + QCM_QUESTIONS[i][QCM_Q_RESP_PTS]
+                qcm_grade_pattern = qcm_grade_pattern + 2^(i-1)
+                if QCM_DEBUG then
+                    print( "Q#"..i.."(sym): correct" )
+                    print( "grade: "..qcm_grade )
+                    print( "pattern: "..qcm_grade_pattern )
+                end   
             end
         end
     end
@@ -545,9 +564,21 @@ function qcm_refresh_screen( )
         
         -- Fill text boxes
         qcm_question:setExpression( QCM_QUESTIONS[qcm_ui_state][QCM_Q_LABEL] )
+        qcm_response:setTextColor( QCM_FONT_COLOR )
         if qcm_answers[qcm_ui_state] == "" or qcm_answers[qcm_ui_state] == nil then
-            qcm_response:setExpression( "", 1 )
+            qcm_response:setExpression( "", 1 )  
         else
+            -- If necessary, define a color according to the validity of the answer
+            if QCM_RESPONSE_FEEDBACK == 1 then
+                if QCM_QUESTIONS[qcm_ui_state][QCM_Q_RESP_PTS] > 0 then
+                    if qcm_check_response( qcm_ui_state ) == true then
+                        qcm_response:setTextColor( QCM_FONT_COLOR_GREEN )
+                    else
+                        qcm_response:setTextColor( QCM_FONT_COLOR_RED )
+                    end
+                end
+            end
+            
             qcm_response:setExpression( qcm_answers[qcm_ui_state], -1 )
         end
         
@@ -1952,5 +1983,3 @@ function qrcode( str, ec_level, mode )
 	local tab = get_matrix_with_lowest_penalty(version,ec_level,arranged_data)
 	return true, tab
 end
-
-    
