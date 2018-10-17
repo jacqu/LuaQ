@@ -45,20 +45,17 @@ local QCM_Q2="Donner l'expression de \\0el {M12}"
 local QCM_R2="[[sin(β),cos(β),0,a3*sin(β)][cos(β),−sin(β),0,a2+a3*cos(β)][0,0,−1,0][0,0,0,1]]"
 local QCM_Q3="Donner l'expression de \\0el {M02}"
 local QCM_R3="[[−sin(α-β),cos(α-β),0,a1-a3*sin(α-β)-a2*sin(α)][cos(α-β),sin(α-β),0,a3*cos(α-β)+a2*cos(α)][0,0,−1,d][0,0,0,1]]"
-local QCM_QUESTIONS = {-- Label of question,                                Good response,      Type of response,   Tolerance,  Points
-                        { "Entrez votre nom...",                            "",                 "string",           0,          0 },                    
-                        { "Entrez votre prénom...",                         "",                 "string",           0,          0 },
-                        { QCM_Q1,                                           QCM_R1,             "sym",              0,          1 },
-                        { QCM_Q2,                                           QCM_R2,             "sym",              0,          1 },
-                        { QCM_Q3,                                           QCM_R3,             "sym",              0,          1 },
-                        { "VALIDER le QUIZ? (o/n)\n(terminer le quiz)",     "o",                "string",           0,          0 }
+local QCM_QUESTIONS = {-- Label of question,                                Good response,      Type of response,   Tolerance,  Points, Feedback
+                        { "Entrez votre nom...",                            "",                 "string",           0,          0,      0 },                    
+                        { "Entrez votre prénom...",                         "",                 "string",           0,          0,      0 },
+                        { QCM_Q1,                                           QCM_R1,             "sym",              0,          1,      1 },
+                        { QCM_Q2,                                           QCM_R2,             "sym",              0,          1,      1 },
+                        { QCM_Q3,                                           QCM_R3,             "sym",              0,          1,      1 },
+                        { "VALIDER le QUIZ? (o/n)\n(terminer le quiz)",     "o",                "string",           0,          0,      0 }
                       }
 
 -- Display textual result along with QR code 1 = display 0 = hide
 local QCM_TEXT_RESULT = 1
-
--- Display red/green color for wrong/right response
-local QCM_RESPONSE_FEEDBACK = 1
 
 -- Define machine aliases ["MACHINE_ID"]="ALIAS"
 local QCM_ALIASES = {
@@ -151,7 +148,7 @@ local QCM_TIMER_PERIOD =    1                       -- Second
 local QCM_QR_CODE_PIX_SZ =  2                       -- Pixels
 local QCM_SPLASH_DURATION = 3                       -- Second
 local QCM_SPLASH_SCREEN =   image.new( _R.IMG.LogoLuaQ )
-local QCM_DEBUG =           1                       -- nil = disable, 1 = enable debug messages
+local QCM_DEBUG =           nil                     -- nil = disable, 1 = enable debug messages
 
 -- Define internal constants
 local QCM_NB_ANSWERS =      table.maxn( QCM_QUESTIONS )
@@ -160,6 +157,8 @@ local QCM_Q_GOOD_RESP =     2
 local QCM_Q_TYPE_RESP =     3
 local QCM_Q_RESP_TOL =      4
 local QCM_Q_RESP_PTS =      5
+-- Display red/green color for wrong/right response
+local QCM_Q_RESP_FEEDBACK = 6
 
 -- Define global variables
 local qcm_answers = { }
@@ -290,7 +289,9 @@ function on.construction( )
             else
                 if qcm_ui_state < QCM_NB_ANSWERS then     
                     -- Increment UI state
-                    qcm_ui_state = qcm_ui_state + 1
+                    if QCM_QUESTIONS[qcm_ui_state][QCM_Q_RESP_FEEDBACK] == 0 then
+                        qcm_ui_state = qcm_ui_state + 1
+                    end
                     qcm_refresh_screen( )
                 end
             end
@@ -569,13 +570,11 @@ function qcm_refresh_screen( )
             qcm_response:setExpression( "", 1 )  
         else
             -- If necessary, define a color according to the validity of the answer
-            if QCM_RESPONSE_FEEDBACK == 1 then
-                if QCM_QUESTIONS[qcm_ui_state][QCM_Q_RESP_PTS] > 0 then
-                    if qcm_check_response( qcm_ui_state ) == true then
-                        qcm_response:setTextColor( QCM_FONT_COLOR_GREEN )
-                    else
-                        qcm_response:setTextColor( QCM_FONT_COLOR_RED )
-                    end
+            if QCM_QUESTIONS[qcm_ui_state][QCM_Q_RESP_FEEDBACK] == 1 then
+                if qcm_check_response( qcm_ui_state ) == true then
+                    qcm_response:setTextColor( QCM_FONT_COLOR_GREEN )
+                else
+                    qcm_response:setTextColor( QCM_FONT_COLOR_RED )
                 end
             end
             
