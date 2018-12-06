@@ -39,20 +39,44 @@
 -- local QCM_R3="z^(-1)"
 
 -- Robotics, chapter 1, exercise 1
-local QCM_Q1="Donner l'expression de \\0el {M01}"
-local QCM_R1="[[cos(α),−sin(α),0,a1][sin(α),cos(α),0,0][0,0,1,d][0,0,0,1]]"
-local QCM_Q2="Donner l'expression de \\0el {M12}"
-local QCM_R2="[[sin(β),cos(β),0,a3*sin(β)][cos(β),−sin(β),0,a2+a3*cos(β)][0,0,−1,0][0,0,0,1]]"
-local QCM_Q3="Donner l'expression de \\0el {M02}"
-local QCM_R3="[[−sin(α-β),cos(α-β),0,a1-a3*sin(α-β)-a2*sin(α)][cos(α-β),sin(α-β),0,a3*cos(α-β)+a2*cos(α)][0,0,−1,d][0,0,0,1]]"
-local QCM_QUESTIONS = {-- Label of question,                                Good response,      Type of response,   Tolerance,  Points, Feedback
-                        { "Entrez votre nom...",                            "",                 "string",           0,          0,      0 },                    
-                        { "Entrez votre prénom...",                         "",                 "string",           0,          0,      0 },
-                        { QCM_Q1,                                           QCM_R1,             "sym",              0,          1,      1 },
-                        { QCM_Q2,                                           QCM_R2,             "sym",              0,          1,      1 },
-                        { QCM_Q3,                                           QCM_R3,             "sym",              0,          1,      1 },
-                        { "VALIDER le QUIZ? (o/n)\n(terminer le quiz)",     "o",                "string",           0,          0,      0 }
-                      }
+-- local QCM_Q1="Donner l'expression de \\0el {M01}"
+-- local QCM_R1="[[cos(α),−sin(α),0,a1][sin(α),cos(α),0,0][0,0,1,d][0,0,0,1]]"
+-- local QCM_Q2="Donner l'expression de \\0el {M12}"
+-- local QCM_R2="[[sin(β),cos(β),0,a3*sin(β)][cos(β),−sin(β),0,a2+a3*cos(β)][0,0,−1,0][0,0,0,1]]"
+-- local QCM_Q3="Donner l'expression de \\0el {M02}"
+-- local QCM_R3="[[−sin(α-β),cos(α-β),0,a1-a3*sin(α-β)-a2*sin(α)][cos(α-β),sin(α-β),0,a3*cos(α-β)+a2*cos(α)][0,0,−1,d][0,0,0,1]]"
+-- local QCM_QUESTIONS = {-- Label of question,                                Good response,      Type of response,   Tolerance,  Points, Feedback
+--                         { "Entrez votre nom...",                            "",                 "string",           0,          0,      0 },                    
+--                         { "Entrez votre prénom...",                         "",                 "string",           0,          0,      0 },
+--                         { QCM_Q1,                                           QCM_R1,             "sym",              0,          1,      1 },
+--                         { QCM_Q2,                                           QCM_R2,             "sym",              0,          1,      1 },
+--                         { QCM_Q3,                                           QCM_R3,             "sym",              0,          1,      1 },
+--                         { "VALIDER le QUIZ? (o/n)\n(terminer le quiz)",     "o",                "string",           0,          0,      0 }
+--                       }
+
+-- Robotics, practical works
+local QCM_Q1="Donner l'expression de \\0el {M₀₃} avec \\0el {t1,t2,t3} les variables articulaires."
+-- m01:=[[cos(t1),−sin(t1),0,0.4*cos(t1)][sin(t1),cos(t1),0,0.4*sin(t1)][0,0,1,0][0,0,0,1]]
+-- m12:=[[cos(t2),−sin(t2),0,0.4*cos(t2)][sin(t2),cos(t2),0,0.4*sin(t2)][0,0,1,0][0,0,0,1]]
+-- m23:=[[cos(t3),−sin(t3),0,0.1*cos(t3)][sin(t3),cos(t3),0,0.1*sin(t3)][0,0,1,0][0,0,0,1]]
+local QCM_R1="[[cos(t1+t2+t3),−sin(t1+t2+t3),0,0.1*cos(t1+t2+t3)+0.4*cos(t1+t2)+0.4*cos(t1)][sin(t1+t2+t3),cos(t1+t2+t3),0,0.1*sin(t1+t2+t3)+0.4*sin(t1+t2)+0.4*sin(t1)][0,0,1,0][0,0,0,1]]"
+local QCM_Q2="En supposant la pince horizontale, donner l'expression de \\0el {cos(t2)} en fonction de \\0el {x,y}"
+local QCM_R2="((x-0.1)^2+y^2)/0.32-1"
+local QCM_Q3="En déduire le vecteur \\0el {[[cos(t1)][sin(t1)]]} en fonction de \\0el {x,y} \\0el {cos(t2)} et \\0el {sin(t2)}"
+local QCM_R3="1/(cos(t2)+1.)*[[1.25*cos(t2)*x+1.25*x+1.25*sin(t2)*y-0.125*cos(t2)-0.125][−1.25*sin(t2)*x+1.25*cos(t2)*y+1.25*y+0.125*sin(t2)]]"
+local QCM_Q4="Trouver \\0el {J(q)} tel que \\0el {((dp)/(dt))=J(q)((dq)/(dt))} en fonction de \\0el {t1,t2,t3}"
+-- p:=[[0.1*cos(t1(t)+t2(t)+t3(t))+0.4*cos(t1(t)+t2(t))+0.4*cos(t1(t))][0.1*sin(t1(t)+t2(t)+t3(t))+0.4*sin(t1(t)+t2(t))+0.4*sin(t1(t))][t1(t)+t2(t)+t3(t)]]
+-- J(q)=
+local QCM_R4="[[−0.1*sin(t1+t2+t3)-0.4*sin(t1+t2)-0.4*sin(t1),−0.1*sin(t1+t2+t3)-0.4*sin(t1+t2),−0.1*sin(t1+t2+t3)][0.1*cos(t1+t2+t3)+0.4*cos(t1+t2)+0.4*cos(t1),0.1*cos(t1+t2+t3)+0.4*cos(t1+t2),0.1*cos(t1+t2+t3)][1,1,1]]"
+local QCM_QUESTIONS = {-- Label of question,                              Good response,      Type of response,   Tolerance,  Points, Feedback
+                      { "Entrez votre nom...",                            "",                 "string",           0,          0,      0 },                    
+                      { "Entrez votre prénom...",                         "",                 "string",           0,          0,      0 },
+                      { QCM_Q1,                                           QCM_R1,             "sym",              0,          1,      1 },
+                      { QCM_Q2,                                           QCM_R2,             "sym",              0,          1,      1 },
+                      { QCM_Q3,                                           QCM_R3,             "sym",              0,          1,      1 },
+                      { QCM_Q4,                                           QCM_R4,             "sym",              0,          1,      1 },
+                      { "VALIDER le QUIZ? (o/n)\n(terminer le quiz)",     "o",                "string",           0,          0,      0 }
+                    }
 
 -- Display textual result along with QR code 1 = display 0 = hide
 local QCM_TEXT_RESULT = 1
@@ -246,7 +270,7 @@ function on.construction( )
             end
             
             if key == "up" then
-                if qcm_ui_state > 1 and qcm_utf8_len( str ) == pos then
+                if qcm_ui_state > 1 and qcm_ui_state <= QCM_NB_ANSWERS and qcm_utf8_len( str ) == pos then
                     qcm_ui_state = qcm_ui_state - 1
                     qcm_refresh_screen( )
                     return true
@@ -469,41 +493,73 @@ function qcm_check_response( i )
         elseif QCM_QUESTIONS[i][QCM_Q_TYPE_RESP] == "sym" then
             -- Expected answer is symbolic
             
-            -- Construct expression to be evaluated by CAS engine
-            local expr1 = "expand(tExpand("..qcm_unpretty( qcm_answers[i] ).."))"
-            local expr2 = "expand(tExpand("..QCM_QUESTIONS[i][QCM_Q_GOOD_RESP].."))"
-            
-            -- Check if expressions are scalar; if yes, insert it in a one dimensional matrix
-            local res, err = math.evalStr( "dim("..expr1..")" )
-            if res == nil then
-                expr1 = "["..expr1.."]"
-            end
-            res, err = math.evalStr( "dim("..expr2..")" )
-            if res == nil then
-                expr2 = "["..expr2.."]"
-            end
-            qcm_expression_check = "norm("..expr1.."-"..expr2..")<="..QCM_QUESTIONS[i][QCM_Q_RESP_TOL]
-            
-            -- Evaluate symbolic expression
-            res, err = math.evalStr( qcm_expression_check )
-            
-            -- Analyze result
+            -- Pre-process good response
+            local expr2 = QCM_QUESTIONS[i][QCM_Q_GOOD_RESP]
+            local res, err = math.evalStr( expr2 )
             if res ~= nil then
-                if QCM_DEBUG then
-                    print( "math.evalStr( "..qcm_expression_check.." ) = "..res )
-                end
-                
-                -- Response is goog if and only if result is "true"       
-                pstart, pend = string.find( res, "true" )
-                
-                if pstart ~= nil then
-                    return true
-                end
-            else
-                if QCM_DEBUG then
-                    print( "math.evalStr( "..qcm_expression_check.." ) = nil" )
-                end
+                res, err = math.evalStr( "texpand("..res..")" )
             end
+            if res ~= nil then
+                res, err = math.evalStr( "tcollect("..res..")" )
+            end
+            if res ~= nil then
+                res, err = math.evalStr( "factor("..res..")" )
+            end
+            if res == nil then
+                expr2 = "0"
+                print( "INTERNAL ERROR: MISSHAPED EQUATION!" )
+            else
+                expr2 = res
+            end
+            
+            -- Pre-process answer
+            local expr1 = qcm_unpretty( qcm_answers[i] )
+            res, err = math.evalStr( expr1 )
+            if res ~= nil then
+                res, err = math.evalStr( "texpand("..res..")" )
+            end
+            if res ~= nil then
+                res, err = math.evalStr( "tcollect("..res..")" )
+            end
+            if res ~= nil then
+                res, err = math.evalStr( "factor("..res..")" )
+            end
+            if res ~= nil then
+            
+                expr1 = res
+                
+                -- Check if expressions are scalar; if yes, insert it in a one dimensional matrix
+                local res, err = math.evalStr( "dim("..expr1..")" )
+                if res == nil then
+                    expr1 = "["..expr1.."]"
+                end
+                res, err = math.evalStr( "dim("..expr2..")" )
+                if res == nil then
+                    expr2 = "["..expr2.."]"
+                end
+                qcm_expression_check = "norm("..expr1.."-"..expr2..")<="..QCM_QUESTIONS[i][QCM_Q_RESP_TOL]
+                
+                -- Evaluate symbolic expression
+                res, err = math.evalStr( qcm_expression_check )
+                
+                -- Analyze result
+                if res ~= nil then
+                    if QCM_DEBUG then
+                        print( "math.evalStr( "..qcm_expression_check.." ) = "..res )
+                    end
+                    
+                    -- Response is goog if and only if result is "true"       
+                    pstart, pend = string.find( res, "true" )
+                    
+                    if pstart ~= nil then
+                        return true
+                    end
+                else
+                    if QCM_DEBUG then
+                        print( "math.evalStr( "..qcm_expression_check.." ) = nil" )
+                    end
+                end
+            end     
         end
     end
     return false
